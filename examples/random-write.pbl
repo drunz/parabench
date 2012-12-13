@@ -1,0 +1,15 @@
+$fileName = "random_write_test_$$rand";
+$fileSize = 1g;
+$chunkSize = 64k;
+$N = $fileSize / $chunkSize;
+
+
+print("Writing", $N, "chunks of", $chunkSize/1024, "KiB to file", $fileName, "of size", $fileSize/1024/1024, "MiB");
+
+$fh = fopen($fileName, "w");
+ctime["Random Write"] repeat $i $N {
+	fwrite($fh, $chunkSize, $$rand % $fileSize);
+}
+fclose($fh);
+
+delete($fileName);

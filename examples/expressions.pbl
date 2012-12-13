@@ -1,0 +1,25 @@
+$var = 2^3;
+$str = "strstrstrstr";
+print(">>", $var);
+print($var);
+print("$var");
+print(">>", $str);
+print($str);
+print("$str");
+print(20%3);
+print((3+4)%2);
+print((30+4)%9);
+print((30+4)%9%4);
+print(1+2*3/4+5*6-2*8+9);
+print(1+2^8);
+print((1+2)^8);
+print((23-54)^7);
+print(54-84);
+
+repeat $i 5 { print($i*1k); }
+
+print(1k, 10k, 4m, 1g, 2g, 1k+1m, 1m*1m*1m);
+
+repeat $i 5 print("2^$i =", 2^$i);
+
+repeat $i 5 print("rand =", $$rand%32+1);

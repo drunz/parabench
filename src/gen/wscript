@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+import Options
+
+APPNAME='parabench'
+
+def configure(conf):
+	conf.setenv('default')
+	conf.write_config_header('config.h')
+	
+	if 'debug' in Options.options.target:
+		conf.setenv('debug')
+		conf.write_config_header('config.h')
+        
+
+def build(bld):
+	#bld.add_pre_fun(ppc)
+	
+	prog_default = bld.new_task_gen(
+		features = 'cprogram cc',
+		source = bld.glob('*.c') + bld.glob('*.l') + bld.glob('*.y'),
+		target = APPNAME,
+		includes = ['.'],
+		uselib = ['M', 'GLIB-2.0'],
+		after = 'ppc'
+	)
+	
+	if bld.env.BUILD_DEBUG:
+		prog_debug = prog_default.clone('debug')

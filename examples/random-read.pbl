@@ -1,0 +1,16 @@
+$fileName = "random_read_test_$$rand";
+$fileSize = 1g;
+$chunkSize = 64k;
+$N = $fileSize / $chunkSize;
+
+ctime["Write"] write($fileName, $fileSize);
+
+print("Reading", $N, "chunks of", $chunkSize/1024, "KiB from file", $fileName, "of size", $fileSize/1024/1024, "MiB");
+
+$fh = fopen($fileName, "r");
+ctime["Random Read"] repeat $i $N {
+	fread($fh, $chunkSize, $$rand % $fileSize);
+}
+fclose($fh);
+
+delete($fileName);

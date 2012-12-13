@@ -1,0 +1,185 @@
+#!/usr/bin/env python
+
+import Options, Scripting, Utils
+import os
+
+Scripting.g_gz = 'gz'
+#Scripting.g_dist_exts = ('.c', '.h', '.l', '.y')
+#Scripting.g_excludes = ('documentation')
+
+APPNAME='parabench'
+VERSION='1.0.0'
+
+srcdir = '.'
+blddir = 'build'
+subdirs = 'gen'
+
+# http://code.google.com/p/waf/source/browse/trunk/demos/cxx/wscript
+
+def set_options(opt):
+	opt.tool_options('compiler_cc')
+	#opt.tool_options('gprof')
+	opt.add_option('--with-mpicc', type='string', dest='mpicc', help='Specify alternate mpicc binary', default='mpicc')
+	opt.add_option('--with-bison', type='string', dest='bison', help='Specify alternate bison binary', default='')
+	opt.add_option('--nompi', action='store_true', default=False, dest='nompi', help='Force to build sequential version')
+	opt.add_option('--target', action='store', default='release', help='Also build the selected variants: debug, gen, prof, testsuite')
+	#opt.add_option('--gprof', action="store_true", help="Compile with gprof support (gcc only)", dest="gprof", default=False)
+	
+
+def configure(conf):
+	#print('-> the value of nompi is %r' % Options.options.nompi)
+	#print('-> the value of target is %r' % Options.options.target)
+	
+	if Options.options.nompi:
+		print 'Parabench is configured as pure POSIX version'
+	
+	if Options.options.bison:
+		conf.env.BISON = Options.options.bison
+	
+	conf.check_tool('bison')
+	#conf.check_tool('bison', tooldir=Options.options.bison)
+	#conf.find_program(Options.options.bison, var = 'BISON')
+	conf.check_tool('flex')
+	conf.check_tool('compiler_cc')
+	
+	#if Options.options.gprof:
+		#conf.check_tool('gprof')
+		#conf.find_program('gprof', var = 'GPROF')
+		#print conf.env.GPROF
+	
+	conf.check_cc(lib='m', uselib_store='M')
+
+	conf.check_cfg(package='glib-2.0', args='--cflags --libs')
+
+	if not Options.options.nompi:
+		conf.find_program(Options.options.mpicc, var = 'MPICC')
+
+	if conf.env.MPICC:
+		conf.env.CC = conf.env.MPICC
+		conf.env.LINK_CC = conf.env.MPICC
+		conf.define('HAVE_MPI', 1)
+		conf.define('VERSION', VERSION+' MPI')
+	else:
+		conf.define('VERSION', VERSION)
+
+
+	# Set build flags
+	if 'debug' in Options.options.target:
+		conf.env.BUILD_DEBUG = True
+	if 'testsuite' in Options.options.target:
+                conf.env.BUILD_TESTSUITE = True
+	if 'gprof' in Options.options.target:
+                conf.env.BUILD_GPROF = True
+	if 'gen' in Options.options.target:
+                conf.env.BUILD_GEN = True
+
+	
+	# Default Environment
+	conf.setenv('default')
+	conf.env.BISONFLAGS = ['-d', '--locations']
+	conf.env.FLEXFLAGS = ['-i', '-B', '-CF', '--yylineno']
+	conf.env.CCFLAGS = ['-O2', '-D_GNU_SOURCE']
+	conf.write_config_header('config.h')
+
+	if 'debug' in Options.options.target:
+		# create the second environment, set the variant and set its name
+		dbg = conf.env.copy()
+		dbg.set_variant('debug')
+		conf.set_env_name('debug', dbg)
+
+		# Debug Environment
+		conf.setenv('debug')
+		conf.env.BISONFLAGS = ['-d', '--locations', '--debug', '--report=all', '-g']
+		conf.env.FLEXFLAGS = ['-i', '-B', '-CF', '--yylineno']
+		conf.env.CCFLAGS = ['-O0', '-Wall', '-ggdb', '-DYYDEBUG=1', '-D_VERBOSE', '-D_GNU_SOURCE']
+		conf.write_config_header('config.h')
+	
+	if 'testsuite' in Options.options.target:
+		# create the third environment, set the variant and set its name
+		test = conf.env.copy()
+		test.set_variant('test')
+		conf.set_env_name('test', test)
+
+		# Test Environment
+		conf.setenv('test')
+		conf.env.BISONFLAGS = ['-d', '--locations']
+		conf.env.FLEXFLAGS = ['-i', '-B', '-CF', '--yylineno']
+		conf.env.CCFLAGS = ['-O0', '-Wall', '-ggdb', '-DYYDEBUG=1', '-D_VERBOSE']
+		conf.write_config_header('config.h')
+	
+	if 'prof' in Options.options.target:
+		# create the third environment, set the variant and set its name
+		prof = conf.env.copy()
+		prof.set_variant('prof')
+		conf.set_env_name('prof', prof)
+
+		# Profiling Environment
+		conf.setenv('prof')
+		conf.env.BISONFLAGS = ['-d', '--locations']
+		conf.env.FLEXFLAGS = ['-i', '-B', '-CF', '--yylineno']
+		conf.env.CCFLAGS = ['-O2', '-pg']
+		conf.env.LINKFLAGS = ['-pg']
+		conf.write_config_header('config.h')
+
+	
+	if 'gen' in Options.options.target:
+		conf.sub_config(subdirs)
+	
+
+def test(ctx):
+	os.chdir("test")
+	os.system("mkdir results")
+	os.system("gtester -k -o results.xml ../build/test/test_expressions ../build/test/test_posixio")
+	os.system("gtester-report results.xml > results/`date +%d%b%G_%H%M%S`.html")
+	os.system("rm results.xml")
+
+
+def ppc_clean(ctx):
+	import glob
+	sourceFiles = glob.glob('gen/*.c') + glob.glob('gen/*.h') + glob.glob('gen/*.l') + glob.glob('gen/*.y')
+	os.system('rm ' + ' '.join(sourceFiles))
+
+
+def ppc(ctx):
+	if ctx.env.BUILD_GEN:
+		Utils.exec_command('ppc/Preprocessor.py')
+
+
+def build(bld):
+	bld.add_pre_fun(ppc)
+	
+	prog_default = bld.new_task_gen(
+		features = 'cprogram cc',
+		source = bld.glob('*.c') + bld.glob('*.l') + bld.glob('*.y'),
+		target = APPNAME,
+		includes = ['.'],
+		uselib = ['M', 'GLIB-2.0']
+	)
+
+	if bld.env.BUILD_DEBUG:
+		prog_debug = prog_default.clone('debug')
+	
+	if bld.env.BUILD_GPROF:
+		prog_prof = prog_default.clone('prof')
+	
+	if bld.env.BUILD_TESTSUITE:
+		prog_test_expressions = bld.new_task_gen(
+			features = 'cprogram cc',
+			source = [f for f in bld.glob('*.c') if 'main.c' not in f] + ['test/test_expressions.c'] + bld.glob('*.l') + bld.glob('*.y'),
+			target = 'test_expressions',
+			includes = ['.'],
+			uselib = ['M', 'GLIB-2.0'],
+			env = bld.env_of_name('test').copy()
+		)
+	
+		prog_test_posixio = bld.new_task_gen(
+			features = 'cprogram cc',
+			source = [f for f in bld.glob('*.c') if 'main.c' not in f] + ['test/test_posixio.c'] + bld.glob('*.l') + bld.glob('*.y'),
+			target = 'test_posixio',
+			includes = ['.'],
+			uselib = ['M', 'GLIB-2.0'],
+			env = bld.env_of_name('test').copy()
+		)
+
+	if bld.env.BUILD_GEN:
+		bld.add_subdirs(subdirs)

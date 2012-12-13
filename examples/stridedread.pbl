@@ -1,0 +1,12 @@
+# Prepare
+write("testfile", 10*1024*1024);
+
+$fh = fopen("testfile", "r");
+time["strided read"] repeat $i 10 { time["stride $i"] fread($fh, 1024*1024); }
+fclose($fh);
+
+print "------------------------------------------";
+
+$fh = fopen("testfile", "r");
+time["read"] fread($fh);
+fclose($fh);

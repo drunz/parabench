@@ -1,0 +1,11 @@
+define param "test" $test "default value"
+
+print "$test";
+
+
+print "$$env(PWD)";
+
+$num = 100;
+time["POSIX-IO stresstest"] {
+        repeat $i 5*3 print "$i";
+}

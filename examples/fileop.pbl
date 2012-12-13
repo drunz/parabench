@@ -1,0 +1,43 @@
+/**
+ * fileop scenario for parabench
+ */ 
+
+define param "num" $num "150"
+
+$env = "./env-posixio-test";
+
+# preparations
+mkdir($env);
+$myDir = "$env/$$rank/";
+mkdir($myDir);
+$file = "$myDir/file";
+
+barrier;
+
+print("filop ++");
+time["POSIX stresstest"]{
+    time["mkdir"]        repeat $i $num mkdir("$myDir-$i");
+    barrier;    
+    time["rmdir"]        repeat $i $num rmdir("$myDir-$i");
+    barrier;  
+      
+    time["create"]        repeat $i $num create("$file-$i");
+    barrier;  
+    
+    time["write"]  	repeat $i $num write("$file-$i", 1024);
+    barrier;
+    time["append"]        repeat $i $num append("$file-$i", 1024);
+    barrier;
+    time["read"]        repeat $i $num read("$file-$i");
+    barrier;
+    
+    time["lookup"]        repeat $i $num lookup("$file-$i");
+    barrier;    
+    
+    time["stat"]        repeat $i $num stat("$file-$i");
+    barrier;    
+    
+    time["delete"]        repeat $i $num delete("$file-$i");
+}
+print("fileop++");
+

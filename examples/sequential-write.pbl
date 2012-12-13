@@ -1,0 +1,15 @@
+$fileName = "sequential_write_test_$$rand";
+$fileSize = 2g;
+$chunkSize = 64m;
+$N = $fileSize / $chunkSize;
+
+
+print("Writing", $N, "chunks of", $chunkSize/1024, "KiB to file", $fileName, "of size", $fileSize/1024/1024, "MiB");
+
+$fh = fopen($fileName, "w");
+ctime["Sequential Write"] repeat $i $N {
+	time ctime fwrite($fh, $chunkSize, $i * $chunkSize);
+}
+fclose($fh);
+
+delete($fileName);

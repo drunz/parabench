@@ -1,0 +1,65 @@
+/**
+ * MPI-IO test scenarios for parabench
+ */ 
+
+define pattern {"pattern0", 2, 10, 104857600, 0};
+define pattern {"pattern1", 2, 10, (100 * 1024 * 1024), 1};
+define pattern {"pattern2", 2, 10, (100 * 1024 * 1024), 2};
+define pattern {"pattern3", 2, 10, (100 * 1024 * 1024), 3};
+
+$env = "pvfs2:///pvfs2";
+
+#
+# MPI-IO test
+#
+time["MPI-IO test"] {
+        time["pwrite-lvl0"] pwrite("$env/file1-level0.dat", "pattern0");
+        time["pwrite-lvl1"] pwrite("$env/file1-level1.dat", "pattern1");
+        time["pwrite-lvl2"] pwrite("$env/file1-level2.dat", "pattern2");
+        time["pwrite-lvl3"] pwrite("$env/file1-level3.dat", "pattern3");
+        
+        barrier("world");
+        
+        time["pread-lvl0"] pread("$env/file1-level0.dat", "pattern0", "world");
+        time["pread-lvl1"] pread("$env/file1-level1.dat", "pattern1", "world");
+        time["pread-lvl2"] pread("$env/file1-level2.dat", "pattern2", "world");
+        time["pread-lvl3"] pread("$env/file1-level3.dat", "pattern3", "world");
+}
+print ("MPI-IO test STOP");
+
+barrier;
+
+#
+# MPI-IO (fh) test
+#
+print ("MPI-IO (fh) test START");
+time["MPI-IO (fh) test"] {
+        time["pfopen"]          $fh = pfopen("$env/file2.dat", "crw");
+        
+        time["pfwrite0"]        pfwrite($fh, "pattern0");
+        barrier;
+        time["pfread0"]         pfread($fh, "pattern0");
+        
+        barrier;
+        
+        time["pfwrite1"]        pfwrite($fh, "pattern1");
+        barrier;
+        time["pfread1"]         pfread($fh, "pattern1");
+        
+        barrier;
+        
+        time["pfwrite2"]        pfwrite($fh, "pattern2");
+        barrier;
+        time["pfread2"]         pfread($fh, "pattern2");
+        
+        barrier;
+        
+        time["pfwrite3"]        pfwrite($fh, "pattern3");
+        barrier;
+        time["pfread3"]         pfread($fh, "pattern3");
+        
+        barrier;
+        
+        time["pfclose"]         pfclose($fh);
+}
+print ("MPI-IO (fh) test STOP");

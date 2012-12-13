@@ -1,0 +1,64 @@
+/**
+ * POSIX-IO test scenarios for parabench
+ */ 
+
+define param "num" $num "1000"
+
+
+$env = "./env-posixio-test";
+$file = "file.dat";         
+mkdir($env);                
+
+#
+# POSIX-IO test
+#              
+print "POSIX-IO test START";
+time["POSIX-IO test"] {     
+        write("$env/$file-a", 1024);
+        append("$env/$file-a", 1024);
+        read("$env/$file-a");        
+        lookup("$env/$file-a");      
+        mkdir("$env/testdir-a");     
+        rmdir("$env/testdir-a");     
+        create("$env/$file-b");      
+        create("$env/$file-c");      
+        delete("$env/$file-c");      
+        stat("$env/$file-a");        
+}                                    
+print "POSIX-IO test STOP";          
+
+barrier;
+
+#
+# POSIX-IO stresstest (run with -c option)
+#
+print "POSIX-IO stresstest START";
+time["POSIX-IO stresstest"] {
+        repeat $i $num write("$env/$file-$i", 1024);
+        repeat $i $num append("$env/$file-$i", 1024);
+        repeat $i $num read("$env/$file-$i");
+        repeat $i $num lookup("$env/$file-$i");
+        repeat $i $num mkdir("$env/dir-$i");
+        repeat $i $num rmdir("$env/dir-$i");
+        repeat $i $num stat("$env/$file-$i");
+        repeat $i $num create("$env/$file-$ia");
+        repeat $i $num delete("$env/$file-$ia");
+}
+print "POSIX-IO stresstest STOP";
+
+barrier;
+
+#
+# POSIX-IO (fh) test
+#
+print "POSIX-IO (fh) test START";
+time["POSIX-IO (fh) test"] {
+        $fh1 = fopen("$env/test1.dat", "w");
+        $fh2 = fopen("$env/test2.dat", "w+");
+        fwrite($fh1, 1024*10);
+        fwrite($fh2, 1024*1024);
+        fread($fh2);
+        fclose($fh1);
+        fclose($fh2);
+}
+

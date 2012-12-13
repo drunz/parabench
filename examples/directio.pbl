@@ -1,0 +1,2 @@
+ctime["write"] dwrite("module_testfile_dwrite", 100*1024*1024);
+ctime["read"] dread("module_testfile_dwrite");
