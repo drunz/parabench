@@ -26,7 +26,6 @@
 #include <glib.h>
 
 
-#ifdef HAVE_MPI
 
 typedef enum {
 	TAG_SINGLE, TAG_DISJOINT, TAG_NONE
@@ -37,6 +36,8 @@ typedef struct {
 	GroupTag tag;	// allows to influence group mapping
 	gint subtag;		// allows to create subgroups for disjoint tagged groups
 } Group;
+
+#ifdef HAVE_MPI
 
 typedef struct {
 	gboolean member;	// 1 if this process is member of the group

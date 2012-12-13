@@ -57,7 +57,9 @@ static gboolean group_cb(const gchar* option_name, const gchar* value, gpointer 
 
 	g_print("%s:%d\n", name, size);
 
+#ifdef HAVE_MPI
 	g_hash_table_insert(sizeGroupmap, name, GINT_TO_POINTER(size));
+#endif
 
 	return TRUE;
 }
@@ -440,9 +442,11 @@ void delayStart()
 		Log("Master is waiting for signal SIGUSR1 to start...");
 		while (waitForStartSignal) sleep(1);
 	}
+#ifdef HAVE_MPI
 	MPI_Bcast(&waitForStartSignal, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
 	Log("Collective start initialized...");
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 }
 
 int main(int argc, char **argv) {
@@ -467,7 +471,9 @@ int main(int argc, char **argv) {
 #endif
 	
 	// read parameters and init interpreter
+#ifdef HAVE_MPI
 	groups_init();//sizeGroupmap = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, & g_free);
+#endif
 	parse_parameters(&argc, &argv);
 
 	if (waitForStartSignal && (rank == MASTER))
@@ -557,7 +563,9 @@ int main(int argc, char **argv) {
 #endif
 	
 	iiFree();
+#ifdef HAVE_MPI
 	groups_free();
+#endif
 
 	finalizeTime = g_timer_elapsed(timer, NULL);
 	g_timer_destroy(timer);

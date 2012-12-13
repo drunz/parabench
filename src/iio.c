@@ -29,9 +29,11 @@ File* file_new(FileType type, gconstpointer handle)
 			//file->handle.stdfh = *((FILE**) handle);
 			memcpy(& file->handle.stdfh, handle, sizeof(FILE*));
 			break;
+#ifdef HAVE_MPI
 		case FILE_MPI:
 			memcpy(& file->handle.mpifh, handle, sizeof(MPI_File));
 			break;
+#endif
 		case FILE_POSIX:
 			memcpy(& file->handle.posixfh, handle, sizeof(int));
 			break;

@@ -27,14 +27,18 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#ifdef HAVE_MPI
 MPI_Info info;
+#endif
 
 // I/O parameter defaults
 enum { OFFSET_CUR = -1, READALL = -1 };
 
 typedef union {
 	FILE* stdfh;
+#ifdef HAVE_MPI
 	MPI_File mpifh;
+#endif
 	int posixfh;
 } FileHandle;
 

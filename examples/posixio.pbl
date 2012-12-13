@@ -41,8 +41,8 @@ time["POSIX-IO stresstest"] {
         repeat $i $num mkdir("$env/dir-$i");
         repeat $i $num rmdir("$env/dir-$i");
         repeat $i $num stat("$env/$file-$i");
-        repeat $i $num create("$env/$file-$ia");
-        repeat $i $num delete("$env/$file-$ia");
+        repeat $i $num create("$env/$file-$i");
+        repeat $i $num delete("$env/$file-$i");
 }
 print "POSIX-IO stresstest STOP";
 
