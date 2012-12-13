@@ -5,14 +5,11 @@ A parallel and programmable benchmark for POSIX and MPI-IO
 
 Dependencies
 ------------
-Required:
 ```
-flex, bison, glib2
+flex, bison, glib2, mpi
 ```
-Optional:
-```
-mpi
-```
+MPICH2 is recommended. Not tested against Open MPI.
+
 
 Building
 --------
@@ -21,3 +18,4 @@ Building
 ./waf [build]
 ./waf install
 ```
+The project also compiles without MPI installed. However, some example programs require a proper MPI build to run.
