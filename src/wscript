@@ -7,8 +7,8 @@ Scripting.g_gz = 'gz'
 #Scripting.g_dist_exts = ('.c', '.h', '.l', '.y')
 #Scripting.g_excludes = ('documentation')
 
-APPNAME='parabench'
-VERSION='1.0.0'
+APPNAME = 'parabench'
+VERSION = '1.0.0'
 
 srcdir = '.'
 blddir = 'build'
@@ -67,11 +67,11 @@ def configure(conf):
 	if 'debug' in Options.options.target:
 		conf.env.BUILD_DEBUG = True
 	if 'testsuite' in Options.options.target:
-                conf.env.BUILD_TESTSUITE = True
+		conf.env.BUILD_TESTSUITE = True
 	if 'gprof' in Options.options.target:
-                conf.env.BUILD_GPROF = True
+		conf.env.BUILD_GPROF = True
 	if 'gen' in Options.options.target:
-                conf.env.BUILD_GEN = True
+		conf.env.BUILD_GEN = True
 
 	
 	# Default Environment
@@ -120,7 +120,6 @@ def configure(conf):
 		conf.env.CCFLAGS = ['-O2', '-pg']
 		conf.env.LINKFLAGS = ['-pg']
 		conf.write_config_header('config.h')
-
 	
 	if 'gen' in Options.options.target:
 		conf.sub_config(subdirs)
@@ -141,8 +140,8 @@ def ppc_clean(ctx):
 
 
 def ppc(ctx):
-	if ctx.env.BUILD_GEN:
-		Utils.exec_command('ppc/Preprocessor.py')
+	if ctx.env and ctx.env.BUILD_GEN:
+		Utils.exec_command('python ppc/Preprocessor.py')
 
 
 def build(bld):
@@ -183,3 +182,4 @@ def build(bld):
 
 	if bld.env.BUILD_GEN:
 		bld.add_subdirs(subdirs)
+

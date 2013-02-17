@@ -32,11 +32,12 @@ The template file system structure is as follows:
     ...
 """
 
-from TemplateEngine import *
-from CodeGenerator import *
-from ModuleProcessor import *
+from TemplateEngine import Template
+from CodeGenerator import CodeGenerator, ScannerKeywordGenerator, ParserTokenGenerator, ParserIdentifierGenerator
+from CodeGenerator import StatementEnumGenerator, StatementExecGenerator, ModuleIncludeGenerator
+from ModuleProcessor import Module
 
-import glob,os, sys, inspect
+import glob, os #, sys, inspect
 
 #
 # Constants
@@ -65,19 +66,19 @@ generator['module_include']    = ModuleIncludeGenerator
 #
 # Main
 #
-def run():
+def main():
     print '*** Parabench Module Preprocessor', VERSION, '***'
     
     #callPath = os.path.dirname(inspect.getfile(sys._getframe()))+'/'
     
-    for moduleFile in glob.glob('modules/*.c'):
-        module = Module(moduleFile);
+    for module_file in glob.glob('modules/*.c'):
+        module = Module(module_file);
         if VERBOSE:
-            module.printParameters()
-        for sourceFile in hooks:
-            cg = CodeGenerator(sourceFile)
-            for hook in hooks[sourceFile]:
-                print 'ppc: %s -> %s -> %s' % (moduleFile, sourceFile, hook)
+            module.print_parameters()
+        for source_file in hooks:
+            cg = CodeGenerator(source_file)
+            for hook in hooks[source_file]:
+                print 'ppc: %s -> %s -> %s' % (module_file, source_file, hook)
                 if generator[hook]:
                     g = generator[hook]()
                     template = Template(hook)
@@ -104,5 +105,6 @@ def run():
     #print '\n\nGenerated Code:'
     #cg.printCode()
 
+
 if __name__ == "__main__":
-    run()
+    main()

@@ -193,7 +193,7 @@ StatementList : Statement {
                   }
                 }
               | StatementList Statement { if ($2 != NULL) g_node_prepend($1, $2); } 
-			  // left recursion can handle any number of Statements with bounded stack space
+              // left recursion can handle any number of Statements with bounded stack space
               ;
 
 Statement : RepeatStatement { $$ = $1; }

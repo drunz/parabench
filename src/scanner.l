@@ -80,11 +80,11 @@ D							return TTAGD;
 [0-9]+[kmg]?				{ yylval->num = atol_extended(yytext); return TDIGIT; }
 \"([^"\n]|\\["\n])*\"		{ yylval->str = strdup(strstrip(yytext)); return TSTRING; }
 "$"[a-zA-Z0-9]*  			{ yylval->str = strdup(yytext); return TVAR; }
-"$$"[a-zA-Z][a-zA-Z0-9]*  	{ yylval->str = strdup(yytext); return TINVAR; }
-\[                      	return TKBRACEL;
-\]                      	return TKBRACER;
-\{                      	return TEBRACEL;
-\}                      	return TEBRACER;
+"$$"[a-zA-Z][a-zA-Z0-9]*	{ yylval->str = strdup(yytext); return TINVAR; }
+\[							return TKBRACEL;
+\]							return TKBRACER;
+\{							return TEBRACEL;
+\}							return TEBRACER;
 \(							return TOBRACEL;
 \)							return TOBRACER;
 \=							return TEQUAL;
@@ -94,16 +94,16 @@ D							return TTAGD;
 \*							return TMUL;
 \/							return TDIV;
 \^							return TPOW;
-\,                       	return TCOMMA;
-\;                       	return TSEMICOLON;
-\:                       	return TCOLON;
+\,							return TCOMMA;
+\;							return TSEMICOLON;
+\:							return TCOLON;
 
-                            /* ![ModuleHook] scanner_keyword */
+  /* ![ModuleHook] scanner_keyword */
 
 "/*""/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/"	/* ignore multiline comments */
 "#"(.)*										/* ignore single line comments */
-\n                      					/* ignore newline */;
-[ \t]+                  					/* ignore whitespace */;
+\n											/* ignore newline */
+[ \t]+										/* ignore whitespace */
 [a-zA-Z]+									printf("Scanner Error: invalid keyword \"%s\"\n", yytext);
 
 %%

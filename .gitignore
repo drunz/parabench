@@ -23,3 +23,11 @@
 .lock-wscript
 .waf-*
 build
+
+# Temp files
+src/gen/*.c
+src/gen/*.h
+src/gen/*.l
+src/gen/*.y
+src/test/results/
+

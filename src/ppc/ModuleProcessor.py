@@ -15,46 +15,45 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Parses the module source file and analyzes certain parameters
-which are important for integrating the kernel as a module into Parabench.
-
-The module's function header will be analyzed for the following parameters:
-* Return Value
-  - gboolean
-  - IOStatus
-* Function Name
-* Parameter List
-  - data type: gchar*, gint, glong
-  - name: any
-  - tags: _IN, _OUT, _INOUT
-"""
 
 import re
 
 
 class Module:
-    returnTypes = ['IOStatus',] #['void', 'gboolean', 'IOStatus'] # allowed return types for modules
+    """Parses the module source file and analyzes certain parameters
+    which are important for integrating the kernel as a module into Parabench.
     
-    def __init__(self, fileName, moduleType='command'):
-        self._fileName = fileName;
-        self._isValid = False
+    The module's function header will be analyzed for the following parameters:
+    * Return Value
+      - gboolean
+      - IOStatus
+    * Function Name
+    * Parameter List
+      - data type: gchar*, gint, glong
+      - name: any
+      - tags: _IN, _OUT, _INOUT"""
+    
+    return_types = ['IOStatus',] #['void', 'gboolean', 'IOStatus'] # allowed return types for modules
+    
+    def __init__(self, file_name, module_type='command'):
+        self._file_name = file_name;
+        self._is_valid = False
         self._parse()
     
     def _parse(self):
-        moduleFile = open(self._fileName, 'r')
+        module_file = open(self._file_name, 'r')
         
-        pattern = r'^[ ]*(?P<return_type>' +'|'.join(self.returnTypes) +')[ ]+(?P<function_name>[A-Za-z0-9_]*)[ ]*[(](?P<parameters>[A-Za-z0-9\* ,_]*)[)]'
+        pattern = r'^[ ]*(?P<return_type>' +'|'.join(self.return_types) +')[ ]+(?P<function_name>[A-Za-z0-9_]*)[ ]*[(](?P<parameters>[A-Za-z0-9\* ,_]*)[)]'
         prog = re.compile(pattern)
         
-        for line in moduleFile:
+        for line in module_file:
             m = prog.match(line)
             
             if m:
-                self.returnType    = m.group('return_type')
-                self.functionName  = m.group('function_name')
+                self.return_type   = m.group('return_type')
+                self.function_name = m.group('function_name')
                 
-                self.parameterList = []
+                self.parameter_list = []
                 for param in m.group('parameters').split(','):
                     # token[0] = type ('gchar*', 'glong')
                     # token[1] = name ('fname', 'offset', ...)
@@ -68,22 +67,22 @@ class Module:
                         token[1]  = token[1][1:]
                         token[0] += '*'
                         
-                    self.parameterList.append((token[0].strip(), token[1].strip()))
+                    self.parameter_list.append((token[0].strip(), token[1].strip()))
                 
-                #print self.parameterList
-                self._isValid = True
+                #print self.parameter_list
+                self._is_valid = True
                 break
             
-        moduleFile.close()
+        module_file.close()
         
-    def isValid(self):
-        return self._isValid
+    def is_valid(self):
+        return self._is_valid
     
-    def getFileName(self):
-        return self._fileName.rsplit('/', 1)[-1]
+    def get_file_name(self):
+        return self._file_name.rsplit('/', 1)[-1]
         
-    def printParameters(self):
-        print 'Parameters of module \"' + self.getFileName() + '\"'
-        print '* Return Type   =', self.returnType
-        print '* Function Name =', self.functionName
-        print '* Parameters    =', self.parameterList
+    def print_parameters(self):
+        print 'Parameters of module \"' + self.get_file_name() + '\"'
+        print '* Return Type   =', self.return_type
+        print '* Function Name =', self.function_name
+        print '* Parameters    =', self.parameter_list

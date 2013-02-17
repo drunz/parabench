@@ -17,51 +17,53 @@
 
 import re
 
+
 class SourceWriter:
-    _hookMap = {}
+    """Writes generated code strings into source files"""
     
-    def __init__(self, sourceFile):
-        if sourceFile:
-            self._sourceFile = sourceFile
-            self._targetFile = self._genFileSuffix(sourceFile)
-            self.pureGenerator = False
+    _hook_map = {}
+    
+    def __init__(self, source_file):
+        if source_file:
+            self._source_file = source_file
+            self._target_file = self._gen_file_suffix(source_file)
+            self.pure_generator = False
         else:
-            self.pureGenerator = True
+            self.pure_generator = True
         
-        hookFormat = r'^[ ]*[\t]*(/\*)[ ]*(!\[ModuleHook\])[ ]+(?P<hook_name>[A-Za-z0-9_]+)[ ]*(\*/)'
-        self._hookProg = re.compile(hookFormat)
+        hook_format = r'^[ ]*[\t]*(/\*)[ ]*(!\[ModuleHook\])[ ]+(?P<hook_name>[A-Za-z0-9_]+)[ ]*(\*/)'
+        self._hook_prog = re.compile(hook_format)
     
-    
-    def _genFileSuffix(self, fileName):
-        return 'gen/'+fileName
-        if '/' in fileName:
-            parts = fileName.rsplit('/', 1)
+    def _gen_file_suffix(self, file_name):
+        return 'gen/' + file_name
+        if '/' in file_name:
+            parts = file_name.rsplit('/', 1)
             return parts[0]+'/gen/'+parts[1]
         else:
-            return fileName + '.gen'
-        
+            return file_name + '.gen'
     
     def _add(self, hook, code):
-        if hook in self._hookMap:
-            self._hookMap[hook] += code
+        if hook in self._hook_map:
+            self._hook_map[hook] += code
         else:
-            self._hookMap[hook]  = code
-        #print 'OK...'
-    
+            self._hook_map[hook]  = code
     
     def write(self):
-        if not self.pureGenerator:
-            source = open(self._sourceFile, 'r')
-            target = open(self._targetFile, 'w')
+        if not self.pure_generator:
+            source = open(self._source_file, 'r')
+            target = open(self._target_file, 'w')
             
             # Iterate over source lines and insert code at hook if found
             for line in source:
                 # Write the code to the found hook
-                m = self._hookProg.match(line)
+                m = self._hook_prog.match(line)
                 if m:
-                    hookName = m.group('hook_name')
+                    # Note: The spaces in the BEGIN/END comments are important!
+                    #       Without the leading spaces, flex will interpet the comments as rules
+                    #       and complain about "unrecognized rule".
+                    hook_name = m.group('hook_name')
                     target.write('  /* BEGIN - Automatically generated code. Do not change! */\n')
-                    target.write(self._hookMap[hookName])
+                    target.write(self._hook_map[hook_name])
                     target.write('  /* END - Automatically generated code. Do not change! */\n')
                 else:
                     target.write(line)
@@ -74,244 +76,253 @@ class SourceWriter:
             Initialize with a source file Name.')
 
 
-
 class CodeGenerator(SourceWriter):
-    stmtEnumPrefix = 'STMT_MOD_'
-    parserTokenPrefix = 'TMOD_'
-    paramFetchMap = {'gchar*':'param_string_get', 'glong':'param_int_get'}
+    """Abstract class that defines interfaces for code generators
+    that allow to produce final source code files using templates.
+    For each type of code block to be generated, a specific
+    code generator subclass is defined."""
+    
+    stmt_enum_prefix = 'STMT_MOD_'
+    parser_token_prefix = 'TMOD_'
+    param_fetch_map = {'gchar*':'param_string_get', 'glong':'param_int_get'}
 
-    """
-    Passing None as sourceFile will create a pure generator,
-    which is not able to write code. If a source file name is given,
-    the generator searches for hooks in this file and replaces them
-    with already generated code.
-    """
-    def __init__(self, sourceFile = None):
-        SourceWriter.__init__(self, sourceFile)
+    def __init__(self, source_file=None):
+        """Passing None as source_file will create a pure generator,
+        which is not able to write code. If a source file name is given,
+        the generator searches for hooks in this file and replaces them
+        with already generated code."""
+        SourceWriter.__init__(self, source_file)
     
-    
-    def printCode(self):
-        for key, value in self._hookMap.iteritems():
+    def print_code(self):
+        for key, value in self._hook_map.iteritems():
             print '[%s]\n' % key
             print value
             print '\n\n'
     
-    
     def generate(self, template, module):
         raise TypeError('Abstract method called')
 
-
             
 class StatementExecGenerator(CodeGenerator):
-    def __init__(self, sourceFile = None):
-        CodeGenerator.__init__(self, sourceFile)
+    """Implements generator routines for producing
+    code blocks responsible for executing interpreter statements.
+    
+    Relevant template: statement_exec.tpl"""
+    
+    def __init__(self, source_file=None):
+        CodeGenerator.__init__(self, source_file)
         
-        
-    def _generateBodyBrickInstance(self, module):
+    def _generate_body_brick_instance(self, module):
         # properties
-        enumType = self.stmtEnumPrefix + module.functionName.upper()
-        numParam = len(module.parameterList)
+        enum_type = self.stmt_enum_prefix + module.function_name.upper()
+        num_param = len(module.parameter_list)
         
         # generate
-        brickInstance = {}
-        brickInstance['<statement_enum_type>'] = enumType
-        brickInstance['<num_param>'] = str(numParam)
-        return brickInstance
+        brick_instance = {}
+        brick_instance['<statement_enum_type>'] = enum_type
+        brick_instance['<num_param>'] = str(num_param)
+        return brick_instance
     
-    
-    def _generateFetchBrickInstances(self, module):
+    def _generate_fetch_brick_instances(self, module):
         # properties
-        numParam = len(module.parameterList)
-        parameterList = module.parameterList
+        num_param = len(module.parameter_list)
+        parameter_list = module.parameter_list
         
         # generate
-        instanceList = []
-        brickInstance = {}
-        for i in range(numParam):
-            paramType = parameterList[i][0]
-            paramName = parameterList[i][1]
-            brickInstance = {"<param_type>":paramType, 
-                             "<param_name>":paramName, 
-                             "<param_fetch_call>":self.paramFetchMap[paramType], 
+        instance_list = []
+        brick_instance = {}
+        for i in range(num_param):
+            param_type = parameter_list[i][0]
+            param_name = parameter_list[i][1]
+            brick_instance = {"<param_type>":param_type, 
+                             "<param_name>":param_name, 
+                             "<param_fetch_call>":self.param_fetch_map[param_type], 
                              "<param_id>":str(i)}
-            instanceList.append(brickInstance)
-        return instanceList
+            instance_list.append(brick_instance)
+        return instance_list
     
-    
-    def _generateAssertBrickInstances(self, module):
+    def _generate_assert_brick_instances(self, module):
         # properties
-        numParam = len(module.parameterList)
+        num_param = len(module.parameter_list)
         
         # generate
-        instanceList = []
-        brickInstance = {'<num_param>':str(numParam)}
+        instance_list = []
+        brick_instance = {'<num_param>':str(num_param)}
         
-        instanceList.append(brickInstance)
-        return instanceList
+        instance_list.append(brick_instance)
+        return instance_list
     
-    
-    def _generateCallBrickInstances(self, module):
+    def _generate_call_brick_instances(self, module):
         # properties
-        parameterList = ', '.join(map(lambda x: x[1], module.parameterList))
-        enumType = self.stmtEnumPrefix + module.functionName.upper()
+        parameterList = ', '.join(map(lambda x: x[1], module.parameter_list))
+        enumType = self.stmt_enum_prefix + module.function_name.upper()
         
         # generate
-        instanceList = []
-        brickInstance = {'<io_func_call>':module.functionName,
+        instance_list = []
+        brick_instance = {'<io_func_call>':module.function_name,
                          '<io_func_param_list>':parameterList,
                          '<statement_enum_type>':enumType}
         
-        instanceList.append(brickInstance)
-        return instanceList
-    
+        instance_list.append(brick_instance)
+        return instance_list
     
     def generate(self, template, module):
-        if template.getName() != 'statement_exec' and not module.isValid():
-            raise NameError('Cannot handle integration hook "%s"' % template.getName())
+        if template.get_name() != 'statement_exec' and not module.is_valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
         
         brick = {}
-        brick['body']             = self._generateBodyBrickInstance(module)
-        brick['parameter_fetch']  = self._generateFetchBrickInstances(module)
-        brick['parameter_assert'] = self._generateAssertBrickInstances(module)
-        brick['module_call']      = self._generateCallBrickInstances(module)
+        brick['body']             = self._generate_body_brick_instance(module)
+        brick['parameter_fetch']  = self._generate_fetch_brick_instances(module)
+        brick['parameter_assert'] = self._generate_assert_brick_instances(module)
+        brick['module_call']      = self._generate_call_brick_instances(module)
         
         code = template.process(brick)
         self._add('statement_exec', code)
 
 
-
 class StatementEnumGenerator(CodeGenerator):
-    def __init__(self, sourceFile = None):
-        CodeGenerator.__init__(self, sourceFile)
+    """Implements generator routines for producing
+    code blocks responsible for statement definition enums.
+    
+    Relevant template: statement_enum.tpl"""
+    
+    def __init__(self, source_file=None):
+        CodeGenerator.__init__(self, source_file)
         
-        
-    def _generateBodyBrickInstance(self, module):
+    def _generate_body_brick_instance(self, module):
         # properties
-        enumType = self.stmtEnumPrefix + module.functionName.upper()
+        enumType = self.stmt_enum_prefix + module.function_name.upper()
         
         # generate
-        brickInstance = {}
-        brickInstance['<statement_enum_type>'] = enumType
-        return brickInstance
-    
+        brick_instance = {}
+        brick_instance['<statement_enum_type>'] = enumType
+        return brick_instance
     
     def generate(self, template, module):
-        if template.getName() != 'statement_enum' and not module.isValid():
-            raise NameError('Cannot handle integration hook "%s"' % template.getName())
+        if template.get_name() != 'statement_enum' and not module.is_valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
         
         brick = {}
-        brick['body'] = self._generateBodyBrickInstance(module)
+        brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
         self._add('statement_enum', code)
 
 
-
 class ParserIdentifierGenerator(CodeGenerator):
-    def __init__(self, sourceFile = None):
-        CodeGenerator.__init__(self, sourceFile)
+    """Implements generator routines for producing
+    code blocks responsible for definition of parser identifiers.
+    
+    Relevant template: parser_identifier.tpl"""
+    
+    def __init__(self, source_file=None):
+        CodeGenerator.__init__(self, source_file)
         
-        
-    def _generateBodyBrickInstance(self, module):
+    def _generate_body_brick_instance(self, module):
         # properties
-        enumType = self.stmtEnumPrefix + module.functionName.upper()
-        token = self.parserTokenPrefix + module.functionName.upper()
+        enumType = self.stmt_enum_prefix + module.function_name.upper()
+        token = self.parser_token_prefix + module.function_name.upper()
         
         # generate
-        brickInstance = {}
-        brickInstance['<statement_enum_type>'] = enumType
-        brickInstance['<statement_token>'] = token
-        return brickInstance
-    
+        brick_instance = {}
+        brick_instance['<statement_enum_type>'] = enumType
+        brick_instance['<statement_token>'] = token
+        return brick_instance
     
     def generate(self, template, module):
-        if template.getName() != 'parser_identifier' and not module.isValid():
-            raise NameError('Cannot handle integration hook "%s"' % template.getName())
+        if template.get_name() != 'parser_identifier' and not module.is_valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
         
         brick = {}
-        brick['body'] = self._generateBodyBrickInstance(module)
+        brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
         self._add('parser_identifier', code)
         
         
-        
 class ParserTokenGenerator(CodeGenerator):
-    def __init__(self, sourceFile = None):
-        CodeGenerator.__init__(self, sourceFile)
+    """Implements generator routines for producing
+    code blocks responsible for parser tokens.
+    
+    Relevant template: parser_token.tpl"""
+    
+    def __init__(self, source_file=None):
+        CodeGenerator.__init__(self, source_file)
         
-        
-    def _generateBodyBrickInstance(self, module):
+    def _generate_body_brick_instance(self, module):
         # properties
-        token = self.parserTokenPrefix + module.functionName.upper()
+        token = self.parser_token_prefix + module.function_name.upper()
         
         # generate
-        brickInstance = {}
-        brickInstance['<statement_token>'] = token
-        return brickInstance
-    
+        brick_instance = {}
+        brick_instance['<statement_token>'] = token
+        return brick_instance
     
     def generate(self, template, module):
-        if template.getName() != 'parser_token' and not module.isValid():
-            raise NameError('Cannot handle integration hook "%s"' % template.getName())
+        if template.get_name() != 'parser_token' and not module.is_valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
         
         brick = {}
-        brick['body'] = self._generateBodyBrickInstance(module)
+        brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
         self._add('parser_token', code)
 
 
-
 class ScannerKeywordGenerator(CodeGenerator):
-    def __init__(self, sourceFile = None):
-        CodeGenerator.__init__(self, sourceFile)
+    """Implements generator routines for producing
+    code blocks responsible for scanner keywords.
+    
+    Relevant template: scanner_keyword.tpl"""
+    
+    def __init__(self, source_file=None):
+        CodeGenerator.__init__(self, source_file)
         
-        
-    def _generateBodyBrickInstance(self, module):
+    def _generate_body_brick_instance(self, module):
         # properties
-        token = self.parserTokenPrefix + module.functionName.upper()
+        token = self.parser_token_prefix + module.function_name.upper()
         
         # generate
-        brickInstance = {}
-        brickInstance['<statement_name>'] = module.functionName
-        brickInstance['<statement_token>'] = token
-        return brickInstance
-    
+        brick_instance = {}
+        brick_instance['<statement_name>'] = module.function_name
+        brick_instance['<statement_token>'] = token
+        return brick_instance
     
     def generate(self, template, module):
-        if template.getName() != 'scanner_keyword' and not module.isValid():
-            raise NameError('Cannot handle integration hook "%s"' % template.getName())
+        if template.get_name() != 'scanner_keyword' and not module.is_valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
         
         brick = {}
-        brick['body'] = self._generateBodyBrickInstance(module)
+        brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
         self._add('scanner_keyword', code)
-        
 
 
 class ModuleIncludeGenerator(CodeGenerator):
-    def __init__(self, sourceFile = None):
-        CodeGenerator.__init__(self, sourceFile)
+    """Implements generator routines for producing
+    code blocks responsible for module source file includes.
+    
+    Relevant template: module_include.tpl"""
+    
+    def __init__(self, source_file=None):
+        CodeGenerator.__init__(self, source_file)
         
-        
-    def _generateBodyBrickInstance(self, module):
+    def _generate_body_brick_instance(self, module):
         # properties
-        token = self.parserTokenPrefix + module.functionName.upper()
+        #token = self.parser_token_prefix + module.function_name.upper()
         
         # generate
-        brickInstance = {}
-        brickInstance['<module_file_name>'] = module.getFileName()
-        return brickInstance
-    
+        brick_instance = {}
+        brick_instance['<module_file_name>'] = module.get_file_name()
+        return brick_instance
     
     def generate(self, template, module):
-        if template.getName() != 'module_include' and not module.isValid():
-            raise NameError('Cannot handle integration hook "%s"' % template.getName())
+        if template.get_name() != 'module_include' and not module.is_valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
         
         brick = {}
-        brick['body'] = self._generateBodyBrickInstance(module)
+        brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
         self._add('module_include', code)
