@@ -28,7 +28,11 @@
         </ul>
       </header>
       <section>
-        <h2>Dependencies</h2>
+        <h1>Parabench</h1>
+
+<p>A parallel and programmable benchmark for POSIX and MPI-IO</p>
+
+<h2>Dependencies</h2>
 
 <pre><code>flex, bison, glib2, mpi
 </code></pre>
@@ -37,12 +41,49 @@
 
 <h2>Building</h2>
 
-<pre><code>./waf configure [--with-mpicc=&lt;BIN Name&gt;] [--prefix=&lt;WHERE&gt;]
+<p>To build the release target, run:</p>
+
+<pre><code>./waf configure [--with-mpicc=&lt;BIN Name&gt;] [--prefix=&lt;WHERE&gt;] [--target=&lt;LIST&gt;]
 ./waf [build]
 ./waf install
 </code></pre>
 
-<p>The project also compiles without MPI installed. However, some example programs require a proper MPI build to run.</p>
+<p>The binaries are placed in the <code>build</code> directory.</p>
+
+<h2>Alternative targets</h2>
+
+<p>There are more targets available next to <code>release</code>, which are <code>debug</code>and <code>gen</code>. To additionally build these optional targets, specify them when running configure, e.g.:</p>
+
+<pre><code>./waf configure --target=debug,gen
+./waf
+</code></pre>
+
+<p>For each target, there will be one directory in the <code>build</code> folder. When the <code>gen</code> target is specified, each folder will have a sub-folder <code>gen</code> containing the binaries for the generated version of the respective target, e.g. <code>build/debug/gen</code> for the generated verion of the debug target.</p>
+
+<p><strong>Note:</strong> When using the <code>gen</code> target, then <code>./waf build</code> needs to be run twice in order to make waf recognize the generated files.</p>
+
+<h2>Parabench Programming Language (PBL)</h2>
+
+<p>Parabench is designed to execute specific application I/O behaviour using I/O kernels defined in a custom scripting language. Example kernels can be found in the <code>examples</code> folder. A more detailed documentation for the language features will follow in the future.</p>
+
+<h2>Preprocessor</h2>
+
+<p>The preprocessor is responsible for integrating the I/O modules defined in the <code>modules</code> folder. To run the preprocessor, specify the <code>gen</code> target when running configure. For each module, an I/O command is made available in the PBL language. For instance, with the <code>dread.c</code> module, a <code>dread</code> command is available and can be used when writing I/O kernels. The parameters for those calls directly correspond to the C-function signature. In case of <code>dread</code>, a string is expected as single parameter. Examples usage of the provided modules <code>dread</code> and <code>dwrite</code> is given in the <code>examples/directio.pbl</code> kernels.</p>
+
+<p>To clean the generated code use <code>.waf ppc_clean</code>.</p>
+
+<h2>License</h2>
+
+<p>Parabench is licensed under GPLv3. Please find a copy in the <code>LICENSE</code> file.</p>
+
+<h2>Acknowledgments</h2>
+
+<p>Thanks to the following persons who participated improvements and fixes to the codebase:</p>
+
+<ul>
+<li>Julian Kunkel</li>
+<li>Michael Kuhn</li>
+</ul>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/drunz">drunz</a></p>
