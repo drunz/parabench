@@ -36,13 +36,13 @@ class SourceWriter:
     
     def _gen_file_suffix(self, file_name):
         return 'gen/' + file_name
-        if '/' in file_name:
-            parts = file_name.rsplit('/', 1)
-            return parts[0]+'/gen/'+parts[1]
-        else:
-            return file_name + '.gen'
+#        if '/' in file_name:
+#            parts = file_name.rsplit('/', 1)
+#            return parts[0]+'/gen/'+parts[1]
+#        else:
+#            return file_name + '.gen'
     
-    def _add(self, hook, code):
+    def _add_code_for_hook(self, hook, code):
         if hook in self._hook_map:
             self._hook_map[hook] += code
         else:
@@ -134,10 +134,10 @@ class StatementExecGenerator(CodeGenerator):
         for i in range(num_param):
             param_type = parameter_list[i][0]
             param_name = parameter_list[i][1]
-            brick_instance = {"<param_type>":param_type, 
-                             "<param_name>":param_name, 
-                             "<param_fetch_call>":self.param_fetch_map[param_type], 
-                             "<param_id>":str(i)}
+            brick_instance = {"<param_type>": param_type, 
+                              "<param_name>": param_name, 
+                              "<param_fetch_call>": self.param_fetch_map[param_type], 
+                              "<param_id>": str(i)}
             instance_list.append(brick_instance)
         return instance_list
     
@@ -167,8 +167,8 @@ class StatementExecGenerator(CodeGenerator):
         return instance_list
     
     def generate(self, template, module):
-        if template.get_name() != 'statement_exec' and not module.is_valid():
-            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
+        if template.name() != 'statement_exec' and not module.valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.name())
         
         brick = {}
         brick['body']             = self._generate_body_brick_instance(module)
@@ -177,7 +177,7 @@ class StatementExecGenerator(CodeGenerator):
         brick['module_call']      = self._generate_call_brick_instances(module)
         
         code = template.process(brick)
-        self._add('statement_exec', code)
+        self._add_code_for_hook('statement_exec', code)
 
 
 class StatementEnumGenerator(CodeGenerator):
@@ -199,14 +199,14 @@ class StatementEnumGenerator(CodeGenerator):
         return brick_instance
     
     def generate(self, template, module):
-        if template.get_name() != 'statement_enum' and not module.is_valid():
-            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
+        if template.name() != 'statement_enum' and not module.valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.name())
         
         brick = {}
         brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
-        self._add('statement_enum', code)
+        self._add_code_for_hook('statement_enum', code)
 
 
 class ParserIdentifierGenerator(CodeGenerator):
@@ -230,14 +230,14 @@ class ParserIdentifierGenerator(CodeGenerator):
         return brick_instance
     
     def generate(self, template, module):
-        if template.get_name() != 'parser_identifier' and not module.is_valid():
-            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
+        if template.name() != 'parser_identifier' and not module.valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.name())
         
         brick = {}
         brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
-        self._add('parser_identifier', code)
+        self._add_code_for_hook('parser_identifier', code)
         
         
 class ParserTokenGenerator(CodeGenerator):
@@ -259,14 +259,14 @@ class ParserTokenGenerator(CodeGenerator):
         return brick_instance
     
     def generate(self, template, module):
-        if template.get_name() != 'parser_token' and not module.is_valid():
-            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
+        if template.name() != 'parser_token' and not module.valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.name())
         
         brick = {}
         brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
-        self._add('parser_token', code)
+        self._add_code_for_hook('parser_token', code)
 
 
 class ScannerKeywordGenerator(CodeGenerator):
@@ -289,14 +289,14 @@ class ScannerKeywordGenerator(CodeGenerator):
         return brick_instance
     
     def generate(self, template, module):
-        if template.get_name() != 'scanner_keyword' and not module.is_valid():
-            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
+        if template.name() != 'scanner_keyword' and not module.valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.name())
         
         brick = {}
         brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
-        self._add('scanner_keyword', code)
+        self._add_code_for_hook('scanner_keyword', code)
 
 
 class ModuleIncludeGenerator(CodeGenerator):
@@ -314,16 +314,16 @@ class ModuleIncludeGenerator(CodeGenerator):
         
         # generate
         brick_instance = {}
-        brick_instance['<module_file_name>'] = module.get_file_name()
+        brick_instance['<module_file_name>'] = module.file_name()
         return brick_instance
     
     def generate(self, template, module):
-        if template.get_name() != 'module_include' and not module.is_valid():
-            raise NameError('Cannot handle integration hook "%s"' % template.get_name())
+        if template.name() != 'module_include' and not module.valid():
+            raise NameError('Cannot handle integration hook "%s"' % template.name())
         
         brick = {}
         brick['body'] = self._generate_body_brick_instance(module)
         
         code = template.process(brick)
-        self._add('module_include', code)
+        self._add_code_for_hook('module_include', code)
     

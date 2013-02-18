@@ -490,7 +490,8 @@ int main(int argc, char **argv) {
 	
 	if(argc < 2) {
 		if(rank == MASTER) {
-			printf("Invalid parameters - specify file!\n");
+			printf("Invalid parameters, please specify file!\n");
+			printf("Use --help to print usage options.\n");
 		}
 		quit();
 	}

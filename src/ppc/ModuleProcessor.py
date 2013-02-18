@@ -29,9 +29,9 @@ class Module:
       - IOStatus
     * Function Name
     * Parameter List
-      - data type: gchar*, gint, glong
-      - name: any
-      - tags: _IN, _OUT, _INOUT"""
+      - allowed data types: gchar*, gint, glong
+      - allowed names: any
+      - allowed tags: _IN, _OUT, _INOUT  (not supported yet)"""
     
     return_types = ['IOStatus',] #['void', 'gboolean', 'IOStatus'] # allowed return types for modules
     
@@ -55,34 +55,34 @@ class Module:
                 
                 self.parameter_list = []
                 for param in m.group('parameters').split(','):
-                    # token[0] = type ('gchar*', 'glong')
-                    # token[1] = name ('fname', 'offset', ...)
+                    # Token format:
+                    #     token[0] -> type ('gchar*', 'glong')
+                    #     token[1] -> name ('fname', 'offset', ...)
                     token = param.rsplit(None, 1)
-                    # remove const modifier
+                    # Remove const modifier
                     token[0] = token[0].replace('const', '').strip()
                     
-                    # when user places the star operator to the qualifier name, we move it to the type
-                    # gchar *str --> gchar* str, gchar **str --> gchar** str, ...
+                    # When user places the star operator to the qualifier name, we move it to the type.
+                    # => gchar *str --> gchar* str / gchar **str --> gchar** str etc.
                     while token[1].startswith('*'):
                         token[1]  = token[1][1:]
                         token[0] += '*'
                         
                     self.parameter_list.append((token[0].strip(), token[1].strip()))
-                
-                #print self.parameter_list
+                    
                 self._is_valid = True
                 break
             
         module_file.close()
         
-    def is_valid(self):
+    def valid(self):
         return self._is_valid
     
-    def get_file_name(self):
+    def file_name(self):
         return self._file_name.rsplit('/', 1)[-1]
         
     def print_parameters(self):
-        print 'Parameters of module \"' + self.get_file_name() + '\"'
+        print 'Parameters of module \"' + self.file_name() + '\"'
         print '* Return Type   =', self.return_type
         print '* Function Name =', self.function_name
         print '* Parameters    =', self.parameter_list

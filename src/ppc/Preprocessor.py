@@ -21,18 +21,20 @@
 Parabench Module Template System:
 
 Hook            -->  Marks a point in source code file where to insert generated code.
-Brick           -->  A template consists of several bricks.
-Brick Instance  -->  A set of option values for a certain brick.
-                     This is used for repeating bricks with different options in a template.
+Template        -->  Code template with placeholders used to generated code.
+Brick           -->  A building block for pieces of code. A template consists of several bricks.
+                     Bricks are templates themselves used for generating sub-blocks of code for a parent template.
+Brick Instance  -->  A set of key-value pairs for a certain brick.
+                     Brick instances are used to generate final code blocks using bricks and a template.
 
 The template file system structure is as follows:
-<template_name.tpl>   -->  Template body file.
+<template_name.tpl>   -->  Template body file, which may include optional bricks.
 <template_name>       -->  Brick files for this template.
     <brick_name>.tpl  -->  A brick template.
     ...
 """
 
-from TemplateEngine import Template
+from Template import Template
 from CodeGenerator import CodeGenerator, ScannerKeywordGenerator, ParserTokenGenerator, ParserIdentifierGenerator
 from CodeGenerator import StatementEnumGenerator, StatementExecGenerator, ModuleIncludeGenerator
 from ModuleProcessor import Module
@@ -46,6 +48,8 @@ VERSION = '0.0.5'
 VERBOSE = False
 
 # Source File to Hook bindings
+#    Each source file can have several 'hooks' which marks
+#    the place where to insert which kind of generated code.
 hooks = {}
 hooks['scanner.l']       = ['scanner_keyword']
 hooks['parser.y']        = ['parser_token', 'parser_identifier']
@@ -53,6 +57,8 @@ hooks['statements.h']    = ['statement_enum']
 hooks['interpreter.c']   = ['statement_exec', 'module_include']
 
 # Hook to Generator bindings
+#    Each hook has a specific generator object, which knows
+#    how to generate the code specific for this hook.
 generator = {}
 generator['scanner_keyword']   = ScannerKeywordGenerator
 generator['parser_token']      = ParserTokenGenerator
@@ -90,20 +96,19 @@ def main():
     
     # Copy production source files to gen dir:
     genfiles = hooks.keys()
-    srcfiles = glob.glob('*.c') + glob.glob('*.h') + glob.glob('*.l') + glob.glob('*.y')
-    #print genfiles
-    #print srcfiles
+    srcfiles = set(glob.glob('*.c') + glob.glob('*.h') + glob.glob('*.l') + glob.glob('*.y'))
+    
     for g in genfiles:
         if g in srcfiles:
             srcfiles.remove(g)
-    #print srcfiles
     
     source = ' '.join(srcfiles)
     if source != '':
-        os.system('cp %s gen/' % (' '.join(srcfiles)))
+        os.system('cp %s gen/' % source)
     
-    #print '\n\nGenerated Code:'
-    #cg.printCode()
+    if VERBOSE:
+        print '\n\nGenerated Code:'
+        cg.print_code()
 
 
 if __name__ == "__main__":

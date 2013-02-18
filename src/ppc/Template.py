@@ -26,7 +26,7 @@ class Template:
     in templates with their corresponding values specified in
     the brick maps"""
     
-    include_hook = '#include:'
+    include_hook = '#include:' # format of the brick include hook used in template files
     
     def __init__(self, template_name):
         self._template_name = template_name
@@ -38,11 +38,10 @@ class Template:
         source_file = open('ppc/tpl/' + self._template_name + '/' +brick_name +'.tpl', 'r')
         code = StringIO()
         
-        # For each brick instance for this brick name
         for brick_instance in brick_map[brick_name]:
             source_file.seek(0)
             for line in source_file:
-                # Replace options
+                # Replace placeholder variables
                 for key, value in brick_instance.iteritems():
                     line = line.replace(key, value)
                 code.write(line)
@@ -51,14 +50,11 @@ class Template:
         return code.getvalue()
     
     def process(self, brick_map):
-        #print self._body_file
-        #print self._brick_files
-        
         code = StringIO()
         body_file = open(self._body_file, 'r')
         
         for line in body_file:
-            # If include found, include brick file and process to code
+            # If include found, include brick file and process it to code
             if self.include_hook in line:
                 code.write(self._process_brick(brick_map, line.split()[1]))
             # Else replace the options and add to code 
@@ -70,6 +66,6 @@ class Template:
         body_file.close()
         return code.getvalue()
     
-    def get_name(self):
+    def name(self):
         return self._template_name
     
