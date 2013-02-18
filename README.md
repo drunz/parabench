@@ -25,7 +25,7 @@ The binaries are placed in the `build` directory.
 
 Alternative targets
 -------------------
-There are more targets available next to `release`, which are `debug`and `gen`. To additionally build these optional targets, specify them when running configure, e.g.:
+There are more targets available next to `release`, which are `debug` and `gen`. To additionally build these optional targets, specify them when running configure, e.g.:
 ```
 ./waf configure --target=debug,gen
 ./waf
@@ -42,9 +42,9 @@ Parabench is designed to execute specific application I/O behaviour using I/O ke
 
 Preprocessor
 ------------
-The preprocessor is responsible for integrating the I/O modules defined in the `modules` folder. To run the preprocessor, specify the `gen` target when running configure. For each module, an I/O command is made available in the PBL language. For instance, with the `dread.c` module, a `dread` command is available and can be used when writing I/O kernels. The parameters for those calls directly correspond to the C-function signature. In case of `dread`, a string is expected as single parameter. Examples usage of the provided modules `dread` and `dwrite` is given in the `examples/directio.pbl` kernels.
+The preprocessor is responsible for integrating the I/O modules defined in the `modules` folder. To run the preprocessor, specify the `gen` target when running configure. For each module, an I/O command is made available in the PBL language. For instance, with the `dread.c` module, a `dread` command is available and can be used when writing I/O kernels. The parameters for those calls directly correspond to the C-function signature. In case of `dread`, a string is expected as single parameter. Example usage of the provided modules `dread` and `dwrite` is given in the `examples/directio.pbl` kernels.
 
-To clean the generated code use `.waf ppc_clean`.
+To clean the generated code use `./waf ppc_clean`.
 
 
 License

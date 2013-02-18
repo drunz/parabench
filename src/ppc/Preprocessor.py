@@ -78,7 +78,7 @@ def main():
     #callPath = os.path.dirname(inspect.getfile(sys._getframe()))+'/'
     
     for module_file in glob.glob('modules/*.c'):
-        module = Module(module_file);
+        module = Module(module_file)
         if VERBOSE:
             module.print_parameters()
         for source_file in hooks:
