@@ -27,6 +27,7 @@
 #include "../interpreter.h"
 
 
+gboolean agileMode = FALSE;
 gboolean parseOnly = FALSE;
 gchar* sourceFileName = "";
 //int yyparse() { return 0; }

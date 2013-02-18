@@ -66,8 +66,8 @@ def configure(conf):
 	# Set build flags
 	if 'debug' in Options.options.target:
 		conf.env.BUILD_DEBUG = True
-	if 'testsuite' in Options.options.target:
-		conf.env.BUILD_TESTSUITE = True
+	if 'tests' in Options.options.target:
+		conf.env.BUILD_TESTS = True
 	if 'gprof' in Options.options.target:
 		conf.env.BUILD_GPROF = True
 	if 'gen' in Options.options.target:
@@ -94,7 +94,7 @@ def configure(conf):
 		conf.env.CCFLAGS = ['-O0', '-Wall', '-ggdb', '-DYYDEBUG=1', '-D_VERBOSE', '-D_GNU_SOURCE']
 		conf.write_config_header('config.h')
 	
-	if 'testsuite' in Options.options.target:
+	if 'tests' in Options.options.target:
 		# create the third environment, set the variant and set its name
 		test = conf.env.copy()
 		test.set_variant('test')
@@ -104,7 +104,7 @@ def configure(conf):
 		conf.setenv('test')
 		conf.env.BISONFLAGS = ['-d', '--locations']
 		conf.env.FLEXFLAGS = ['-i', '-B', '-CF', '--yylineno']
-		conf.env.CCFLAGS = ['-O0', '-Wall', '-ggdb', '-DYYDEBUG=1', '-D_VERBOSE']
+		conf.env.CCFLAGS = ['-O0', '-Wall', '-ggdb', '-DYYDEBUG=1', '-D_VERBOSE', '-D_GNU_SOURCE']
 		conf.write_config_header('config.h')
 	
 	if 'prof' in Options.options.target:
@@ -131,6 +131,8 @@ def test(ctx):
 	os.system("gtester -k -o results.xml ../build/test/test_expressions ../build/test/test_posixio")
 	os.system("gtester-report results.xml > results/`date +%d%b%G_%H%M%S`.html")
 	os.system("rm results.xml")
+	os.chdir("..")
+	# Note: If you see a "KeyError: 'package'", this is a bug in the gtester-report tool.
 
 
 def ppc_clean(ctx):
@@ -161,7 +163,7 @@ def build(bld):
 	if bld.env.BUILD_GPROF:
 		prog_prof = prog_default.clone('prof')
 	
-	if bld.env.BUILD_TESTSUITE:
+	if bld.env.BUILD_TESTS:
 		prog_test_expressions = bld.new_task_gen(
 			features = 'cprogram cc',
 			source = [f for f in bld.glob('*.c') if 'main.c' not in f] + ['test/test_expressions.c'] + bld.glob('*.l') + bld.glob('*.y'),
@@ -170,7 +172,7 @@ def build(bld):
 			uselib = ['M', 'GLIB-2.0'],
 			env = bld.env_of_name('test').copy()
 		)
-	
+		
 		prog_test_posixio = bld.new_task_gen(
 			features = 'cprogram cc',
 			source = [f for f in bld.glob('*.c') if 'main.c' not in f] + ['test/test_posixio.c'] + bld.glob('*.l') + bld.glob('*.y'),

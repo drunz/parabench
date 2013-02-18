@@ -28,6 +28,7 @@
 #include <fcntl.h>
 
 
+gboolean agileMode = FALSE;
 gboolean parseOnly = FALSE;
 gchar* sourceFileName = "";
 //int yyparse() {}
@@ -84,13 +85,13 @@ void test_io_fopenclose()
 	g_message("File \"%s\" must exist to pass the test!", fname->str);
 
 	File* fh;
-	gboolean rc = iio_fopen(fname->str, O_RDONLY, &fh);
+	IOStatus ioStatus = iio_fopen(fname->str, O_RDONLY, &fh);
 	g_assert(fh);
 	g_assert(fh->handle.stdfh);
-	g_assert(rc);
+	g_assert(ioStatus.success);
 
-	rc = iio_fclose(fh);
-	g_assert(rc);
+	ioStatus = iio_fclose(fh);
+	g_assert(ioStatus.success);
 
 	delete_file(fname->str);
 }
@@ -110,7 +111,7 @@ void test_io_fread_all()
 	g_message("Reading %d chunks sequential of %d bytes from offset %d of file \"%s\"",
 			(FILESIZE/chunkSize), chunkSize, offset, fname->str);
 	File* fh;
-	g_assert(iio_fopen(fname->str, O_RDONLY, &fh));
+	g_assert(iio_fopen(fname->str, O_RDONLY, &fh).success);
 	g_assert(fh);
 	g_assert(fh->handle.stdfh);
 
@@ -122,18 +123,18 @@ void test_io_fread_all()
 		dataRead += status.coreTime.data;
 	}
 	g_assert_cmpint(dataRead, ==, ((FILESIZE/chunkSize)-1)*chunkSize);
-	g_assert(iio_fclose(fh));
+	g_assert(iio_fclose(fh).success);
 
 	/* whole file with one chunk */
 	g_message("Reading whole file from offset %d of file \"%s\"", offset, fname->str);
-	g_assert(iio_fopen(fname->str, O_RDONLY, &fh));
+	g_assert(iio_fopen(fname->str, O_RDONLY, &fh).success);
 	g_assert(fh);
 	g_assert(fh->handle.stdfh);
 
 	IOStatus status = iio_fread(fh, READALL, offset);
 	g_assert(status.success);
 	g_assert_cmpint(status.coreTime.data, ==, FILESIZE);
-	g_assert(iio_fclose(fh));
+	g_assert(iio_fclose(fh).success);
 
 
 	delete_file(fname->str);
@@ -154,7 +155,7 @@ void test_io_fread_sequential()
 
 
 	File* fh;
-	g_assert(iio_fopen(fname->str, O_RDONLY, &fh));
+	g_assert(iio_fopen(fname->str, O_RDONLY, &fh).success);
 	g_assert(fh);
 	g_assert(fh->handle.stdfh);
 
@@ -168,7 +169,7 @@ void test_io_fread_sequential()
 
 	g_assert_cmpint(dataRead, ==, ((FILESIZE/chunkSize)-1)*chunkSize);
 
-	g_assert(iio_fclose(fh));
+	g_assert(iio_fclose(fh).success);
 
 	delete_file(fname->str);
 	g_string_free(fname, TRUE);
@@ -188,7 +189,7 @@ void test_io_fread_random()
 
 
 	File* fh;
-	g_assert(iio_fopen(fname->str, O_RDONLY, &fh));
+	g_assert(iio_fopen(fname->str, O_RDONLY, &fh).success);
 	g_assert(fh);
 	g_assert(fh->handle.stdfh);
 
@@ -197,7 +198,7 @@ void test_io_fread_random()
 
 	g_assert_cmpint(status.coreTime.data, ==, chunkSize);
 
-	g_assert(iio_fclose(fh));
+	g_assert(iio_fclose(fh).success);
 
 	delete_file(fname->str);
 	g_string_free(fname, TRUE);
@@ -215,7 +216,7 @@ void test_io_fwrite_sequential()
 
 
 	File* fh;
-	g_assert(iio_fopen(fname->str, O_WRONLY, &fh));
+	g_assert(iio_fopen(fname->str, O_WRONLY, &fh).success);
 	g_assert(fh);
 	g_assert(fh->handle.stdfh);
 
@@ -231,7 +232,7 @@ void test_io_fwrite_sequential()
 	glong fileSize = get_file_size(fname->str);
 	g_assert_cmpint(((FILESIZE/chunkSize)-1)*chunkSize, ==, fileSize);
 
-	g_assert(iio_fclose(fh));
+	g_assert(iio_fclose(fh).success);
 
 	delete_file(fname->str);
 	g_string_free(fname, TRUE);
@@ -249,7 +250,7 @@ void test_io_fwrite_random()
 
 
 	File* fh;
-	g_assert(iio_fopen(fname->str, O_WRONLY, &fh));
+	g_assert(iio_fopen(fname->str, O_WRONLY, &fh).success);
 	g_assert(fh);
 	g_assert(fh->handle.stdfh);
 
@@ -260,7 +261,7 @@ void test_io_fwrite_random()
 	glong fileSize = get_file_size(fname->str);
 	g_assert_cmpint(offset+chunkSize, ==, fileSize);
 
-	g_assert(iio_fclose(fh));
+	g_assert(iio_fclose(fh).success);
 
 	delete_file(fname->str);
 	g_string_free(fname, TRUE);
@@ -390,7 +391,7 @@ void test_io_delete()
 	create_file(fname->str);
 
 	g_assert(file_exists(fname->str));
-	g_assert(iio_delete(fname->str));
+	g_assert(iio_delete(fname->str).success);
 	g_assert(!file_exists(fname->str));
 
 	g_string_free(fname, TRUE);
@@ -402,7 +403,7 @@ void test_io_mkdir()
 	g_string_append_printf(fname, "%d", g_test_rand_int());
 
 	g_assert(!file_exists(fname->str));
-	g_assert(iio_mkdir(fname->str));
+	g_assert(iio_mkdir(fname->str).success);
 	g_assert(file_exists(fname->str));
 
 	delete_file(fname->str);
@@ -418,7 +419,7 @@ void test_io_rmdir()
 	make_dir(fname->str);
 
 	g_assert(file_exists(fname->str));
-	g_assert(iio_rmdir(fname->str));
+	g_assert(iio_rmdir(fname->str).success);
 	g_assert(!file_exists(fname->str));
 
 	g_string_free(fname, TRUE);
@@ -430,7 +431,7 @@ void test_io_create()
 	g_string_append_printf(fname, "%d", g_test_rand_int());
 
 	g_assert(!file_exists(fname->str));
-	g_assert(iio_create(fname->str));
+	g_assert(iio_create(fname->str).success);
 	g_assert(file_exists(fname->str));
 
 	delete_file(fname->str);
@@ -445,8 +446,8 @@ void test_io_stat()
 
 	create_file(fname->str);
 
-	g_assert(iio_stat(fname->str));
-	g_assert(!iio_stat("doesntexist"));
+	g_assert(iio_stat(fname->str).success);
+	g_assert(!iio_stat("doesntexist").success);
 
 	delete_file(fname->str);
 
@@ -462,11 +463,11 @@ void test_io_rename()
 
 	create_file(oldname->str);
 
-	g_assert(iio_rename(oldname->str, newname->str));
+	g_assert(iio_rename(oldname->str, newname->str).success);
 	g_assert(!file_exists(oldname->str));
 	g_assert(file_exists(newname->str));
 
-	g_assert(!iio_rename("doesntexist", "something"));
+	g_assert(!iio_rename("doesntexist", "something").success);
 
 	delete_file(newname->str);
 
