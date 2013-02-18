@@ -50,6 +50,7 @@ class Template:
         return code.getvalue()
     
     def process(self, brick_map):
+        """Process this template to code using the brick map provided."""
         code = StringIO()
         body_file = open(self._body_file, 'r')
         

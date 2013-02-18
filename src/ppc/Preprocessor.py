@@ -23,9 +23,9 @@ Parabench Module Template System:
 Hook            -->  Marks a point in source code file where to insert generated code.
 Template        -->  Code template with placeholders used to generated code.
 Brick           -->  A building block for pieces of code. A template consists of several bricks.
-                     Bricks are templates themselves used for generating sub-blocks of code for a parent template.
+                     Bricks are templates themselves used for generating sub-blocks of code within a parent template.
 Brick Instance  -->  A set of key-value pairs for a certain brick.
-                     Brick instances are used to generate final code blocks using bricks and a template.
+                     Brick instances are used to generate final code blocks using bricks.
 
 The template file system structure is as follows:
 <template_name.tpl>   -->  Template body file, which may include optional bricks.

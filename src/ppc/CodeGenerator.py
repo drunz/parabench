@@ -49,6 +49,7 @@ class SourceWriter:
             self._hook_map[hook]  = code
     
     def write(self):
+        """Write the generated code to files."""
         if not self.pure_generator:
             source = open(self._source_file, 'r')
             target = open(self._target_file, 'w')
@@ -84,7 +85,8 @@ class CodeGenerator(SourceWriter):
     
     stmt_enum_prefix = 'STMT_MOD_'
     parser_token_prefix = 'TMOD_'
-    param_fetch_map = {'gchar*':'param_string_get', 'glong':'param_int_get'}
+    param_fetch_map = {'gchar*': 'param_string_get', 
+                       'glong': 'param_int_get'}
 
     def __init__(self, source_file=None):
         """Passing None as source_file will create a pure generator,
@@ -100,6 +102,11 @@ class CodeGenerator(SourceWriter):
             print '\n\n'
     
     def generate(self, template, module):
+        """Generate code for the specified module using the given template.
+        The generated code integrates the module into the current code base at compile time.
+        
+        Abstract method: Use any of the provided child classes to generate code
+        for an integration hook."""
         raise TypeError('Abstract method called')
 
             
